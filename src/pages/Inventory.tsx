@@ -10,6 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { Plus, Minus, Search, FileDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface Product {
   id: string;
@@ -113,7 +117,35 @@ const Inventory = () => {
   );
 
   const exportToPDF = () => {
-    toast.info("Función de exportación en desarrollo");
+    if (!products || products.length === 0) {
+      toast.error("No hay productos para exportar");
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text("Inventario de Productos", 14, 22);
+    doc.setFontSize(11);
+    doc.text(`Generado: ${format(new Date(), "PPp", { locale: es })}`, 14, 30);
+
+    const tableData = products.map((product) => [
+      product.name,
+      product.packages.toLocaleString(),
+      product.pieces_per_package.toLocaleString(),
+      product.total_pieces.toLocaleString(),
+    ]);
+
+    autoTable(doc, {
+      head: [["Producto", "Paquetes", "Pzs/Paq", "Total Piezas"]],
+      body: tableData,
+      startY: 35,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246] },
+    });
+
+    doc.save(`inventario_${format(new Date(), "dd-MM-yyyy")}.pdf`);
+    toast.success("PDF generado exitosamente");
   };
 
   return (

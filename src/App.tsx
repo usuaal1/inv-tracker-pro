@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Auth from "./pages/Auth";
 import Layout from "./components/Layout";
 import Inventory from "./pages/Inventory";
+import Movements from "./pages/Movements";
 import Scrap from "./pages/Scrap";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
@@ -22,7 +23,7 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<Layout><Inventory /></Layout>} />
-          <Route path="/movements" element={<Layout><Inventory /></Layout>} />
+          <Route path="/movements" element={<Layout><Movements /></Layout>} />
           <Route path="/scrap" element={<Layout><Scrap /></Layout>} />
           <Route path="/history" element={<Layout><History /></Layout>} />
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
