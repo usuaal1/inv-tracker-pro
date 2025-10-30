@@ -68,7 +68,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
-          packages: number | null
+          pallets: number | null
           pieces_per_package: number
           total_pieces: number | null
           updated_at: string
@@ -78,7 +78,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
-          packages?: number | null
+          pallets?: number | null
           pieces_per_package: number
           total_pieces?: number | null
           updated_at?: string
@@ -88,7 +88,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
-          packages?: number | null
+          pallets?: number | null
           pieces_per_package?: number
           total_pieces?: number | null
           updated_at?: string

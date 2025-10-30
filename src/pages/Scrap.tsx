@@ -65,7 +65,7 @@ const Scrap = () => {
           machine_name: machine,
           product_id: productId,
           scrap_type: scrapType,
-          quantity: parseInt(quantity),
+          quantity: parseFloat(quantity),
           user_id: user?.id,
         });
 
@@ -161,13 +161,14 @@ const Scrap = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Cantidad</Label>
+                <Label>Cantidad (KG)</Label>
                 <Input
                   type="number"
+                  step="0.01"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="0"
-                  min="1"
+                  placeholder="0.00"
+                  min="0.01"
                 />
               </div>
 
@@ -189,7 +190,7 @@ const Scrap = () => {
                 {Object.entries(dailyTotals).map(([productName, total]) => (
                   <div key={productName} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
                     <span className="font-medium">{productName}</span>
-                    <Badge variant="outline">{total.toLocaleString()} unidades</Badge>
+                    <Badge variant="outline">{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KG</Badge>
                   </div>
                 ))}
               </div>
@@ -218,7 +219,7 @@ const Scrap = () => {
                       {record.machine_name} • {record.scrap_type}
                     </p>
                   </div>
-                  <Badge>{record.quantity.toLocaleString()}</Badge>
+                  <Badge>{record.quantity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KG</Badge>
                 </div>
               ))
             ) : (

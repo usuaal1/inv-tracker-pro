@@ -72,7 +72,7 @@ const Settings = () => {
       <Card>
         <CardHeader>
           <CardTitle>Configuración de Productos</CardTitle>
-          <CardDescription>Modifica las piezas por paquete de cada producto</CardDescription>
+          <CardDescription>Modifica las piezas por pallet de cada producto</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -81,7 +81,7 @@ const Settings = () => {
                 <div>
                   <p className="font-medium">{product.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {product.pieces_per_package} piezas por paquete
+                    {product.pieces_per_package} piezas por pallet
                   </p>
                 </div>
                 <Dialog>
@@ -104,7 +104,7 @@ const Settings = () => {
                     </DialogHeader>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="piecesPerPackage">Piezas por paquete</Label>
+                        <Label htmlFor="piecesPerPackage">Piezas por pallet</Label>
                         <Input
                           id="piecesPerPackage"
                           type="number"

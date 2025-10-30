@@ -18,7 +18,7 @@ import { es } from "date-fns/locale";
 interface Product {
   id: string;
   name: string;
-  packages: number;
+  pallets: number;
   pieces_per_package: number;
   total_pieces: number;
   category: string;
@@ -29,7 +29,10 @@ const Inventory = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState("");
   const [movementType, setMovementType] = useState<"entry" | "exit">("exit");
+  const [quantityType, setQuantityType] = useState<"pieces" | "pallets">("pieces");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newProduct, setNewProduct] = useState({ name: "", pallets: "", pieces_per_package: "" });
   const queryClient = useQueryClient();
 
   const { data: products, isLoading } = useQuery({
@@ -73,12 +76,12 @@ const Inventory = () => {
         throw new Error("No hay suficiente inventario");
       }
 
-      const newPackages = newTotalPieces / product.pieces_per_package;
+      const newPallets = newTotalPieces / product.pieces_per_package;
 
       const { error: updateError } = await supabase
         .from("products")
         .update({
-          packages: newPackages,
+          pallets: newPallets,
           total_pieces: newTotalPieces,
         })
         .eq("id", productId);
@@ -97,19 +100,58 @@ const Inventory = () => {
     },
   });
 
+  const createProduct = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("products")
+        .insert({
+          name: newProduct.name,
+          pallets: parseFloat(newProduct.pallets),
+          pieces_per_package: parseInt(newProduct.pieces_per_package),
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Producto creado");
+      setIsCreateDialogOpen(false);
+      setNewProduct({ name: "", pallets: "", pieces_per_package: "" });
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
   const handleMovement = () => {
     if (!selectedProduct || !quantity) return;
     
-    const quantityPieces = parseInt(quantity);
-    if (isNaN(quantityPieces) || quantityPieces <= 0) {
+    let quantityPieces: number;
+    const qty = parseFloat(quantity);
+    
+    if (isNaN(qty) || qty <= 0) {
       toast.error("Cantidad inválida");
       return;
+    }
+
+    if (quantityType === "pallets") {
+      quantityPieces = Math.round(qty * selectedProduct.pieces_per_package);
+    } else {
+      quantityPieces = Math.round(qty);
     }
 
     recordMovement.mutate({
       productId: selectedProduct.id,
       quantityPieces,
     });
+  };
+
+  const handleCreateProduct = () => {
+    if (!newProduct.name || !newProduct.pallets || !newProduct.pieces_per_package) {
+      toast.error("Completa todos los campos");
+      return;
+    }
+    createProduct.mutate();
   };
 
   const filteredProducts = products?.filter(p =>
@@ -131,13 +173,13 @@ const Inventory = () => {
 
     const tableData = products.map((product) => [
       product.name,
-      product.packages.toLocaleString(),
+      product.pallets.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       product.pieces_per_package.toLocaleString(),
       product.total_pieces.toLocaleString(),
     ]);
 
     autoTable(doc, {
-      head: [["Producto", "Paquetes", "Pzs/Paq", "Total Piezas"]],
+      head: [["Producto", "Pallets", "Pzs/Pallet", "Total Piezas"]],
       body: tableData,
       startY: 35,
       styles: { fontSize: 9 },
@@ -155,10 +197,63 @@ const Inventory = () => {
           <h1 className="text-3xl font-bold">Inventario</h1>
           <p className="text-muted-foreground">Gestiona tu inventario de productos</p>
         </div>
-        <Button onClick={exportToPDF} variant="outline">
-          <FileDown className="mr-2 h-4 w-4" />
-          Exportar PDF
-        </Button>
+        <div className="flex gap-2">
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="default">
+                <Plus className="mr-2 h-4 w-4" />
+                Crear Producto
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Crear Nuevo Producto</DialogTitle>
+                <DialogDescription>Ingresa la información del producto</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="productName">Nombre del Producto</Label>
+                  <Input
+                    id="productName"
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                    placeholder="Nombre"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pallets">Pallets</Label>
+                  <Input
+                    id="pallets"
+                    type="number"
+                    step="0.01"
+                    value={newProduct.pallets}
+                    onChange={(e) => setNewProduct({ ...newProduct, pallets: e.target.value })}
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pieces">Piezas por Pallet</Label>
+                  <Input
+                    id="pieces"
+                    type="number"
+                    value={newProduct.pieces_per_package}
+                    onChange={(e) => setNewProduct({ ...newProduct, pieces_per_package: e.target.value })}
+                    placeholder="0"
+                    min="1"
+                  />
+                </div>
+                <Button onClick={handleCreateProduct} className="w-full" disabled={createProduct.isPending}>
+                  {createProduct.isPending ? "Creando..." : "Crear Producto"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Button onClick={exportToPDF} variant="outline">
+            <FileDown className="mr-2 h-4 w-4" />
+            Exportar PDF
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -185,8 +280,8 @@ const Inventory = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Producto</TableHead>
-                    <TableHead className="text-right">Paquetes</TableHead>
-                    <TableHead className="text-right">Pzs/Paq</TableHead>
+                    <TableHead className="text-right">Pallets</TableHead>
+                    <TableHead className="text-right">Pzs/Pallet</TableHead>
                     <TableHead className="text-right">Total Piezas</TableHead>
                     <TableHead className="text-center">Acciones</TableHead>
                   </TableRow>
@@ -195,7 +290,7 @@ const Inventory = () => {
                   {filteredProducts?.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="text-right">{product.packages.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">{product.pallets.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                       <TableCell className="text-right">{product.pieces_per_package.toLocaleString()}</TableCell>
                       <TableCell className="text-right">
                         <Badge variant={product.total_pieces > 0 ? "default" : "secondary"}>
@@ -255,19 +350,43 @@ const Inventory = () => {
                                   </div>
                                 </div>
                                 <div className="space-y-2">
-                                  <Label htmlFor="quantity">Cantidad (piezas)</Label>
+                                  <Label>Unidad de medida</Label>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      type="button"
+                                      variant={quantityType === "pieces" ? "default" : "outline"}
+                                      onClick={() => setQuantityType("pieces")}
+                                      className="flex-1"
+                                    >
+                                      Piezas
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant={quantityType === "pallets" ? "default" : "outline"}
+                                      onClick={() => setQuantityType("pallets")}
+                                      className="flex-1"
+                                    >
+                                      Pallets
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="quantity">Cantidad ({quantityType === "pieces" ? "piezas" : "pallets"})</Label>
                                   <Input
                                     id="quantity"
                                     type="number"
+                                    step={quantityType === "pallets" ? "0.01" : "1"}
                                     value={quantity}
                                     onChange={(e) => setQuantity(e.target.value)}
                                     placeholder="0"
-                                    min="1"
+                                    min={quantityType === "pallets" ? "0.01" : "1"}
                                   />
                                   <p className="text-sm text-muted-foreground">
-                                    {quantity && !isNaN(parseInt(quantity)) 
-                                      ? `= ${(parseInt(quantity) / product.pieces_per_package).toFixed(2)} paquetes`
-                                      : "Ingresa la cantidad en piezas"}
+                                    {quantity && !isNaN(parseFloat(quantity)) 
+                                      ? quantityType === "pieces"
+                                        ? `= ${(parseFloat(quantity) / product.pieces_per_package).toFixed(2)} pallets`
+                                        : `= ${(parseFloat(quantity) * product.pieces_per_package).toFixed(0)} piezas`
+                                      : `Ingresa la cantidad en ${quantityType === "pieces" ? "piezas" : "pallets"}`}
                                   </p>
                                 </div>
                                 <Button onClick={handleMovement} className="w-full" disabled={recordMovement.isPending}>

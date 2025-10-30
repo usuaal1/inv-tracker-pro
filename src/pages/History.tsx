@@ -46,7 +46,7 @@ const History = () => {
       record.products?.name || "N/A",
       record.machine_name,
       record.scrap_type,
-      record.quantity.toLocaleString(),
+      `${record.quantity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KG`,
     ]);
 
     autoTable(doc, {
@@ -97,7 +97,7 @@ const History = () => {
                   </div>
                   <div className="flex items-center gap-4">
                     <Badge variant="outline">{record.scrap_type}</Badge>
-                    <Badge variant="destructive">{record.quantity.toLocaleString()} pzs</Badge>
+                    <Badge variant="destructive">{record.quantity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KG</Badge>
                   </div>
                 </div>
               ))}
