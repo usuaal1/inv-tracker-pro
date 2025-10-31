@@ -62,6 +62,50 @@ export type Database = {
           },
         ]
       }
+      production_orders: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          machine_name: string
+          notes: string | null
+          product_id: string
+          quantity_ordered: number
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          machine_name: string
+          notes?: string | null
+          product_id: string
+          quantity_ordered: number
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          machine_name?: string
+          notes?: string | null
+          product_id?: string
+          quantity_ordered?: number
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string | null
