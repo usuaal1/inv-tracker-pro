@@ -1,4 +1,4 @@
-import { Package, ArrowLeftRight, Trash2, History, Settings, LogOut } from "lucide-react";
+import { Package, ArrowLeftRight, Trash2, ClipboardList, History, Settings, LogOut } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -18,6 +18,7 @@ const menuItems = [
   { title: "Inventario", url: "/", icon: Package },
   { title: "Movimientos", url: "/movements", icon: ArrowLeftRight },
   { title: "Scrap", url: "/scrap", icon: Trash2 },
+  { title: "Órdenes", url: "/production-orders", icon: ClipboardList },
   { title: "Historial", url: "/history", icon: History },
   { title: "Configuración", url: "/settings", icon: Settings },
 ];
