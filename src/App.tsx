@@ -9,6 +9,8 @@ import Inventory from "./pages/Inventory";
 import Movements from "./pages/Movements";
 import Scrap from "./pages/Scrap";
 import ProductionOrders from "./pages/ProductionOrders";
+import MachineStatus from "./pages/MachineStatus";
+import PlantMap from "./pages/PlantMap";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -27,6 +29,8 @@ const App = () => (
           <Route path="/movements" element={<Layout><Movements /></Layout>} />
           <Route path="/scrap" element={<Layout><Scrap /></Layout>} />
           <Route path="/production-orders" element={<Layout><ProductionOrders /></Layout>} />
+          <Route path="/machine-status" element={<Layout><MachineStatus /></Layout>} />
+          <Route path="/plant-map" element={<Layout><PlantMap /></Layout>} />
           <Route path="/history" element={<Layout><History /></Layout>} />
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

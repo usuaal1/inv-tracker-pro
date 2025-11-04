@@ -94,7 +94,7 @@ const Scrap = () => {
         .from("scrap_records")
         .insert({
           machine_name: machine,
-          product_id: productId,
+          product_id: productId || null,
           scrap_type: scrapType,
           quantity: parseFloat(quantity),
           user_id: user?.id,
@@ -208,8 +208,8 @@ const Scrap = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!machine || !productId || !scrapType || !quantity) {
-      toast.error("Completa todos los campos");
+    if (!machine || !scrapType || !quantity) {
+      toast.error("Completa máquina, tipo de scrap y cantidad");
       return;
     }
     addScrap.mutate();
@@ -321,12 +321,13 @@ const Scrap = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm">Producto</Label>
+                <Label className="text-sm">Producto (opcional)</Label>
                 <Select value={productId} onValueChange={setProductId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un producto" />
+                    <SelectValue placeholder="Sin producto especificado" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">Sin producto</SelectItem>
                     {products?.map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
