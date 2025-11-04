@@ -62,6 +62,65 @@ export type Database = {
           },
         ]
       }
+      machine_production: {
+        Row: {
+          created_at: string
+          hour_timestamp: string
+          id: string
+          machine_id: string
+          production_count: number
+        }
+        Insert: {
+          created_at?: string
+          hour_timestamp?: string
+          id?: string
+          machine_id: string
+          production_count?: number
+        }
+        Update: {
+          created_at?: string
+          hour_timestamp?: string
+          id?: string
+          machine_id?: string
+          production_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machine_production_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      machines: {
+        Row: {
+          cavities: number
+          created_at: string
+          id: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cavities?: number
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cavities?: number
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       production_orders: {
         Row: {
           completed_at: string | null
@@ -165,7 +224,7 @@ export type Database = {
           created_at: string
           id: string
           machine_name: string
-          product_id: string
+          product_id: string | null
           quantity: number
           record_date: string
           scrap_type: string
@@ -175,7 +234,7 @@ export type Database = {
           created_at?: string
           id?: string
           machine_name: string
-          product_id: string
+          product_id?: string | null
           quantity: number
           record_date?: string
           scrap_type: string
@@ -185,7 +244,7 @@ export type Database = {
           created_at?: string
           id?: string
           machine_name?: string
-          product_id?: string
+          product_id?: string | null
           quantity?: number
           record_date?: string
           scrap_type?: string
