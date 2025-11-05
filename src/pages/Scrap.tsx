@@ -94,7 +94,7 @@ const Scrap = () => {
         .from("scrap_records")
         .insert({
           machine_name: machine,
-          product_id: productId || null,
+          product_id: productId && productId !== "none" ? productId : null,
           scrap_type: scrapType,
           quantity: parseFloat(quantity),
           user_id: user?.id,
@@ -327,7 +327,7 @@ const Scrap = () => {
                     <SelectValue placeholder="Sin producto especificado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sin producto</SelectItem>
+                    <SelectItem value="none">Sin producto</SelectItem>
                     {products?.map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
