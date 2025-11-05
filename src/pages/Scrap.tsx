@@ -234,7 +234,7 @@ const Scrap = () => {
     doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 30);
 
     const summaryData = scrapSummaryArray.map((item: any) => [
-      item.productName,
+      item.machineName,
       `${item.SCRAP.toFixed(2)} KG`,
       `${item.PLASTA.toFixed(2)} KG`,
       `${item.PURGA.toFixed(2)} KG`,
@@ -244,19 +244,19 @@ const Scrap = () => {
 
     autoTable(doc, {
       startY: 40,
-      head: [["Producto", "Scrap", "Plasta", "Purga", "Preforma", "Total"]],
+      head: [["Máquina", "Scrap", "Plasta", "Purga", "Preforma", "Total"]],
       body: summaryData,
     });
 
     doc.save(`scrap_${new Date().toISOString().split("T")[0]}.pdf`);
   };
 
-  // Calculate summary by product and type
+  // Calculate summary by machine and type
   const scrapSummary = todayScrap?.reduce((acc: any, record: any) => {
-    const productName = record.products?.name || "Sin producto";
-    if (!acc[productName]) {
-      acc[productName] = {
-        productName,
+    const key = record.machine_name;
+    if (!acc[key]) {
+      acc[key] = {
+        machineName: record.machine_name,
         SCRAP: 0,
         PLASTA: 0,
         PURGA: 0,
@@ -265,8 +265,8 @@ const Scrap = () => {
       };
     }
     const qty = parseFloat(record.quantity) || 0;
-    acc[productName][record.scrap_type] += qty;
-    acc[productName].total += qty;
+    acc[key][record.scrap_type] += qty;
+    acc[key].total += qty;
     return acc;
   }, {});
 
@@ -480,8 +480,8 @@ const Scrap = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg md:text-xl">Resumen del Día por Tipo</CardTitle>
-          <CardDescription className="text-xs md:text-sm">Total acumulado separado por tipo de scrap</CardDescription>
+          <CardTitle className="text-lg md:text-xl">Resumen del Día por Máquina</CardTitle>
+          <CardDescription className="text-xs md:text-sm">Total acumulado separado por máquina y tipo de scrap</CardDescription>
         </CardHeader>
         <CardContent>
           {scrapSummaryArray.length === 0 ? (
@@ -491,7 +491,7 @@ const Scrap = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-2 font-medium">Producto</th>
+                    <th className="text-left py-2 px-2 font-medium">Máquina</th>
                     <th className="text-right py-2 px-2 font-medium">Scrap</th>
                     <th className="text-right py-2 px-2 font-medium">Plasta</th>
                     <th className="text-right py-2 px-2 font-medium">Purga</th>
@@ -501,8 +501,8 @@ const Scrap = () => {
                 </thead>
                 <tbody>
                   {scrapSummaryArray.map((item: any) => (
-                    <tr key={item.productName} className="border-b">
-                      <td className="py-2 px-2">{item.productName}</td>
+                    <tr key={item.machineName} className="border-b">
+                      <td className="py-2 px-2">{item.machineName}</td>
                       <td className="text-right py-2 px-2">{item.SCRAP.toFixed(2)}</td>
                       <td className="text-right py-2 px-2">{item.PLASTA.toFixed(2)}</td>
                       <td className="text-right py-2 px-2">{item.PURGA.toFixed(2)}</td>
