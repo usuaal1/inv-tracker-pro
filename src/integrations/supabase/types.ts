@@ -98,28 +98,45 @@ export type Database = {
         Row: {
           cavities: number
           created_at: string
+          current_product_id: string | null
           id: string
           name: string
+          quantity_ordered: number | null
+          quantity_produced: number | null
           status: string
           updated_at: string
         }
         Insert: {
           cavities?: number
           created_at?: string
+          current_product_id?: string | null
           id?: string
           name: string
+          quantity_ordered?: number | null
+          quantity_produced?: number | null
           status?: string
           updated_at?: string
         }
         Update: {
           cavities?: number
           created_at?: string
+          current_product_id?: string | null
           id?: string
           name?: string
+          quantity_ordered?: number | null
+          quantity_produced?: number | null
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "machines_current_product_id_fkey"
+            columns: ["current_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       production_orders: {
         Row: {

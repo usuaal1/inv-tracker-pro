@@ -17,6 +17,18 @@ interface Machine {
   name: string;
   cavities: number;
   status: MachineStatus;
+  current_product_id: string | null;
+  quantity_ordered: number;
+  quantity_produced: number;
+  products?: {
+    id: string;
+    name: string;
+  };
+}
+
+interface Product {
+  id: string;
+  name: string;
 }
 
 const statusLabels: Record<MachineStatus, string> = {
@@ -37,6 +49,7 @@ export default function MachineStatus() {
   const queryClient = useQueryClient();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [newMachine, setNewMachine] = useState({ name: "", cavities: "" });
 
@@ -45,19 +58,48 @@ export default function MachineStatus() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("machines")
+        .select(`
+          *,
+          products:current_product_id (
+            id,
+            name
+          )
+        `)
+        .order("name");
+      
+      if (error) throw error;
+      return data as any[];
+    }
+  });
+
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
         .select("*")
         .order("name");
       
       if (error) throw error;
-      return data as Machine[];
+      return data as Product[];
     }
   });
 
   const updateMachine = useMutation({
-    mutationFn: async ({ id, cavities, status }: { id: string; cavities?: number; status?: MachineStatus }) => {
+    mutationFn: async ({ id, cavities, status, current_product_id, quantity_ordered, quantity_produced }: { 
+      id: string; 
+      cavities?: number; 
+      status?: MachineStatus;
+      current_product_id?: string | null;
+      quantity_ordered?: number;
+      quantity_produced?: number;
+    }) => {
       const updates: any = {};
       if (cavities !== undefined) updates.cavities = cavities;
       if (status !== undefined) updates.status = status;
+      if (current_product_id !== undefined) updates.current_product_id = current_product_id;
+      if (quantity_ordered !== undefined) updates.quantity_ordered = quantity_ordered;
+      if (quantity_produced !== undefined) updates.quantity_produced = quantity_produced;
       
       const { error } = await supabase
         .from("machines")
@@ -70,6 +112,7 @@ export default function MachineStatus() {
       queryClient.invalidateQueries({ queryKey: ["machines"] });
       toast.success("Máquina actualizada");
       setEditDialogOpen(false);
+      setProductDialogOpen(false);
     },
     onError: (error) => {
       toast.error("Error al actualizar máquina");
@@ -100,6 +143,23 @@ export default function MachineStatus() {
   const handleEdit = (machine: Machine) => {
     setSelectedMachine(machine);
     setEditDialogOpen(true);
+  };
+
+  const handleProductAssignment = (machine: Machine) => {
+    setSelectedMachine(machine);
+    setProductDialogOpen(true);
+  };
+
+  const handleUpdateProduct = (productId: string | null, quantityOrdered: string) => {
+    if (selectedMachine) {
+      const qty = quantityOrdered ? parseFloat(quantityOrdered) : 0;
+      updateMachine.mutate({ 
+        id: selectedMachine.id, 
+        current_product_id: productId,
+        quantity_ordered: qty,
+        quantity_produced: 0
+      });
+    }
   };
 
   const handleUpdateCavities = () => {
@@ -173,6 +233,11 @@ export default function MachineStatus() {
                   <p className="text-sm text-muted-foreground">
                     {machine.cavities} {machine.cavities === 1 ? "cavidad" : "cavidades"}
                   </p>
+                  {machine.products?.name && (
+                    <p className="text-sm font-medium text-primary">
+                      📦 {machine.products.name}
+                    </p>
+                  )}
                 </div>
                 <Button
                   variant="ghost"
@@ -184,29 +249,39 @@ export default function MachineStatus() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <Label className="text-xs">Estado Actual</Label>
-                <Select
-                  value={machine.status}
-                  onValueChange={(value) => updateMachine.mutate({ id: machine.id, status: value as MachineStatus })}
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Estado Actual</Label>
+                  <Select
+                    value={machine.status}
+                    onValueChange={(value) => updateMachine.mutate({ id: machine.id, status: value as MachineStatus })}
+                  >
+                    <SelectTrigger>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${statusColors[machine.status]}`} />
+                        <SelectValue />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(statusLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${statusColors[value as MachineStatus]}`} />
+                            {label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleProductAssignment(machine)}
+                  className="w-full"
                 >
-                  <SelectTrigger>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${statusColors[machine.status]}`} />
-                      <SelectValue />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(statusLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded-full ${statusColors[value as MachineStatus]}`} />
-                          {label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {machine.current_product_id ? "Cambiar Producto" : "Asignar Producto"}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -231,6 +306,66 @@ export default function MachineStatus() {
               />
             </div>
             <Button onClick={handleUpdateCavities} className="w-full">
+              Actualizar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Asignar Producto - {selectedMachine?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div>
+              <Label>Producto</Label>
+              <Select
+                value={selectedMachine?.current_product_id || "none"}
+                onValueChange={(value) => {
+                  if (selectedMachine) {
+                    setSelectedMachine({
+                      ...selectedMachine,
+                      current_product_id: value === "none" ? null : value
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar producto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin producto</SelectItem>
+                  {products?.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {selectedMachine?.current_product_id && (
+              <div>
+                <Label>Cantidad Ordenada</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={selectedMachine?.quantity_ordered || 0}
+                  onChange={(e) => setSelectedMachine(prev => 
+                    prev ? { ...prev, quantity_ordered: parseFloat(e.target.value) || 0 } : null
+                  )}
+                  placeholder="Cantidad a producir"
+                />
+              </div>
+            )}
+            <Button 
+              onClick={() => handleUpdateProduct(
+                selectedMachine?.current_product_id || null,
+                selectedMachine?.quantity_ordered?.toString() || "0"
+              )} 
+              className="w-full"
+            >
               Actualizar
             </Button>
           </div>

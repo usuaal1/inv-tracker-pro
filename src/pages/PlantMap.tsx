@@ -17,6 +17,18 @@ interface Machine {
   name: string;
   cavities: number;
   status: MachineStatus;
+  current_product_id: string | null;
+  quantity_ordered: number;
+  quantity_produced: number;
+  products?: {
+    id: string;
+    name: string;
+  };
+}
+
+interface Product {
+  id: string;
+  name: string;
 }
 
 interface ProductionData {
@@ -58,11 +70,17 @@ export default function PlantMap() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("machines")
-        .select("*")
+        .select(`
+          *,
+          products:current_product_id (
+            id,
+            name
+          )
+        `)
         .order("name");
       
       if (error) throw error;
-      return data as Machine[];
+      return data as any[];
     }
   });
 
@@ -225,19 +243,38 @@ export default function PlantMap() {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {machines?.map((machine) => {
           const production = getProductionForMachine(machine.id);
+          const productName = machine.products?.name;
+          const isAlmostDone = machine.quantity_ordered > 0 && 
+            machine.quantity_produced >= machine.quantity_ordered * 0.9;
+          
           return (
             <button
               key={machine.id}
               onClick={() => handleMachineClick(machine)}
-              className={`${statusColors[machine.status]} text-white rounded-lg p-4 transition-all hover:scale-105 cursor-pointer shadow-lg`}
+              className={`${statusColors[machine.status]} text-white rounded-lg p-4 transition-all hover:scale-105 cursor-pointer shadow-lg relative`}
             >
+              {isAlmostDone && (
+                <div className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                  ⚠️
+                </div>
+              )}
               <div className="space-y-2">
                 <div className="font-bold text-lg">{machine.name}</div>
                 <div className="text-xs opacity-90">{machine.cavities} cav.</div>
+                {productName && (
+                  <div className="text-xs font-semibold bg-white/20 px-2 py-1 rounded">
+                    {productName}
+                  </div>
+                )}
                 <div className="flex items-center justify-center gap-1 text-xs">
                   <Activity className="h-3 w-3" />
                   <span>{production}/h</span>
                 </div>
+                {machine.quantity_ordered > 0 && (
+                  <div className="text-xs opacity-90">
+                    {machine.quantity_produced}/{machine.quantity_ordered}
+                  </div>
+                )}
               </div>
             </button>
           );
@@ -267,6 +304,35 @@ export default function PlantMap() {
                   <p className="font-medium">{selectedMachine.cavities}</p>
                 </div>
               </div>
+              
+              {selectedMachine.products?.name && (
+                <div>
+                  <Label className="text-sm text-muted-foreground">Producto Actual</Label>
+                  <p className="font-medium text-lg">{selectedMachine.products.name}</p>
+                </div>
+              )}
+              
+              {selectedMachine.quantity_ordered > 0 && (
+                <div>
+                  <Label className="text-sm text-muted-foreground">Progreso de Orden</Label>
+                  <div className="space-y-1">
+                    <p className="text-lg font-bold">
+                      {selectedMachine.quantity_produced} / {selectedMachine.quantity_ordered}
+                    </p>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all"
+                        style={{ 
+                          width: `${Math.min(100, (selectedMachine.quantity_produced / selectedMachine.quantity_ordered) * 100)}%` 
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {((selectedMachine.quantity_produced / selectedMachine.quantity_ordered) * 100).toFixed(1)}% completado
+                    </p>
+                  </div>
+                </div>
+              )}
               
               <div>
                 <Label className="text-sm text-muted-foreground">Producción esta hora</Label>
