@@ -15,6 +15,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import logo from "@/assets/logo.png";
 
 interface Product {
   id: string;
@@ -180,6 +181,10 @@ const Inventory = () => {
 
     const doc = new jsPDF();
     
+    const img = new Image();
+    img.src = logo;
+    doc.addImage(img, "PNG", 170, 10, 25, 10);
+    
     doc.setFontSize(18);
     doc.text("Inventario de Productos", 14, 22);
     doc.setFontSize(11);
@@ -197,7 +202,7 @@ const Inventory = () => {
       body: tableData,
       startY: 35,
       styles: { fontSize: 9 },
-      headStyles: { fillColor: [59, 130, 246] },
+      headStyles: { fillColor: [0, 168, 89] },
     });
 
     doc.save(`inventario_${format(new Date(), "dd-MM-yyyy")}.pdf`);

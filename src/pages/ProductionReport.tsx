@@ -13,6 +13,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import logo from "@/assets/logo.png";
 
 interface ProductionReport {
   id: string;
@@ -197,6 +198,10 @@ const ProductionReport = () => {
 
     const doc = new jsPDF();
     
+    const img = new Image();
+    img.src = logo;
+    doc.addImage(img, "PNG", 170, 10, 25, 10);
+    
     doc.setFontSize(18);
     doc.text("REPORTE DE PRODUCCIÓN", 14, 20);
     doc.setFontSize(12);
@@ -218,7 +223,7 @@ const ProductionReport = () => {
       body: tableData,
       startY: 42,
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [59, 130, 246] },
+      headStyles: { fillColor: [0, 168, 89] },
     });
 
     doc.save(`produccion_turno${selectedShift}_${selectedDate}.pdf`);

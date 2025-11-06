@@ -15,6 +15,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import logo from "@/assets/logo.png";
 
 type MachineStatus = "producing" | "mold_change" | "minor_stop" | "major_stop";
 
@@ -255,6 +256,10 @@ export default function PlantMap() {
 
     const doc = new jsPDF();
     
+    const img = new Image();
+    img.src = logo;
+    doc.addImage(img, "PNG", 170, 10, 25, 10);
+    
     doc.setFontSize(18);
     doc.text("MAPA DE PLANTA", 14, 20);
     doc.setFontSize(12);
@@ -277,7 +282,7 @@ export default function PlantMap() {
       body: tableData,
       startY: 42,
       styles: { fontSize: 9 },
-      headStyles: { fillColor: [59, 130, 246] },
+      headStyles: { fillColor: [0, 168, 89] },
     });
 
     if (currentComment && currentComment.comments) {
