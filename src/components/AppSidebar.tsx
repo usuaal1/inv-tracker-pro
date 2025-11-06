@@ -1,4 +1,4 @@
-import { Package, ArrowLeftRight, Trash2, ClipboardList, Cpu, Map, History, Settings, LogOut } from "lucide-react";
+import { Package, ArrowLeftRight, Trash2, ClipboardList, Cpu, Map, History, Settings, LogOut, FileText } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -21,6 +21,7 @@ const menuItems = [
   { title: "Órdenes", url: "/production-orders", icon: ClipboardList },
   { title: "Estado Máquinas", url: "/machine-status", icon: Cpu },
   { title: "Mapa Planta", url: "/plant-map", icon: Map },
+  { title: "Reporte Producción", url: "/production-report", icon: FileText },
   { title: "Historial", url: "/history", icon: History },
   { title: "Configuración", url: "/settings", icon: Settings },
 ];

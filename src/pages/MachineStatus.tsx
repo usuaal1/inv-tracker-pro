@@ -45,6 +45,25 @@ const statusColors: Record<MachineStatus, string> = {
   major_stop: "bg-red-500"
 };
 
+// Helper function to sort machines numerically
+const sortMachines = (machines: Machine[]) => {
+  return machines.sort((a, b) => {
+    const aMatch = a.name.match(/(\D+)(\d+)/);
+    const bMatch = b.name.match(/(\D+)(\d+)/);
+    
+    if (!aMatch || !bMatch) return a.name.localeCompare(b.name);
+    
+    const [, aPrefix, aNum] = aMatch;
+    const [, bPrefix, bNum] = bMatch;
+    
+    if (aPrefix !== bPrefix) {
+      return aPrefix.localeCompare(bPrefix);
+    }
+    
+    return parseInt(aNum) - parseInt(bNum);
+  });
+};
+
 export default function MachineStatus() {
   const queryClient = useQueryClient();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -68,7 +87,7 @@ export default function MachineStatus() {
         .order("name");
       
       if (error) throw error;
-      return data as any[];
+      return sortMachines(data as any[]);
     }
   });
 

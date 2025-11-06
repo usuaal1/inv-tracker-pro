@@ -182,6 +182,59 @@ export type Database = {
           },
         ]
       }
+      production_reports: {
+        Row: {
+          created_at: string
+          cycle_time: string | null
+          id: string
+          machine_id: string | null
+          machine_name: string
+          notes: string | null
+          product_name: string | null
+          production_achieved: number | null
+          production_goal: number | null
+          report_date: string
+          shift_number: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cycle_time?: string | null
+          id?: string
+          machine_id?: string | null
+          machine_name: string
+          notes?: string | null
+          product_name?: string | null
+          production_achieved?: number | null
+          production_goal?: number | null
+          report_date?: string
+          shift_number: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cycle_time?: string | null
+          id?: string
+          machine_id?: string | null
+          machine_name?: string
+          notes?: string | null
+          product_name?: string | null
+          production_achieved?: number | null
+          production_goal?: number | null
+          report_date?: string
+          shift_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_reports_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string | null
@@ -283,6 +336,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shift_comments: {
+        Row: {
+          comment_date: string
+          comments: string | null
+          created_at: string
+          id: string
+          shift_number: number
+          updated_at: string
+        }
+        Insert: {
+          comment_date?: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          shift_number: number
+          updated_at?: string
+        }
+        Update: {
+          comment_date?: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          shift_number?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

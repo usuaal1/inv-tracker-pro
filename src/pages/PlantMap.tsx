@@ -7,8 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Activity, TrendingUp } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Activity, TrendingUp, FileDown, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 type MachineStatus = "producing" | "mold_change" | "minor_stop" | "major_stop";
 
@@ -59,11 +65,33 @@ const statusTextColors: Record<MachineStatus, string> = {
   major_stop: "text-red-500"
 };
 
+// Helper function to sort machines numerically
+const sortMachines = (machines: Machine[]) => {
+  return machines.sort((a, b) => {
+    const aMatch = a.name.match(/(\D+)(\d+)/);
+    const bMatch = b.name.match(/(\D+)(\d+)/);
+    
+    if (!aMatch || !bMatch) return a.name.localeCompare(b.name);
+    
+    const [, aPrefix, aNum] = aMatch;
+    const [, bPrefix, bNum] = bMatch;
+    
+    if (aPrefix !== bPrefix) {
+      return aPrefix.localeCompare(bPrefix);
+    }
+    
+    return parseInt(aNum) - parseInt(bNum);
+  });
+};
+
 export default function PlantMap() {
   const queryClient = useQueryClient();
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [productionInput, setProductionInput] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
+  const [selectedShift, setSelectedShift] = useState<number>(1);
+  const [shiftComment, setShiftComment] = useState("");
 
   const { data: machines } = useQuery({
     queryKey: ["machines"],
@@ -80,9 +108,33 @@ export default function PlantMap() {
         .order("name");
       
       if (error) throw error;
-      return data as any[];
+      return sortMachines(data as any[]);
     }
   });
+
+  const { data: currentComment } = useQuery({
+    queryKey: ["shift-comment", selectedShift],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("shift_comments")
+        .select("*")
+        .eq("comment_date", today)
+        .eq("shift_number", selectedShift)
+        .single();
+      
+      if (error && error.code !== "PGRST116") throw error;
+      return data;
+    }
+  });
+
+  useEffect(() => {
+    if (currentComment) {
+      setShiftComment(currentComment.comments || "");
+    } else {
+      setShiftComment("");
+    }
+  }, [currentComment]);
 
   const { data: productionData } = useQuery({
     queryKey: ["machine_production"],
@@ -168,6 +220,79 @@ export default function PlantMap() {
     }
   };
 
+  const saveComment = useMutation({
+    mutationFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      if (currentComment) {
+        const { error } = await supabase
+          .from("shift_comments")
+          .update({ comments: shiftComment })
+          .eq("id", currentComment.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("shift_comments")
+          .insert({
+            comment_date: today,
+            shift_number: selectedShift,
+            comments: shiftComment
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shift-comment"] });
+      toast.success("Comentario guardado");
+      setCommentsDialogOpen(false);
+    }
+  });
+
+  const exportMapToPDF = () => {
+    if (!machines || machines.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text("MAPA DE PLANTA", 14, 20);
+    doc.setFontSize(12);
+    doc.text(`Fecha: ${format(new Date(), "dd 'de' MMMM, yyyy", { locale: es })}`, 14, 28);
+    doc.text(`Hora: ${format(new Date(), "HH:mm")}`, 14, 35);
+
+    const tableData = machines.map((machine) => [
+      machine.name,
+      statusLabels[machine.status],
+      machine.products?.name || "-",
+      machine.cavities.toString(),
+      getProductionForMachine(machine.id).toString(),
+      machine.quantity_ordered > 0 
+        ? `${machine.quantity_produced}/${machine.quantity_ordered}`
+        : "-"
+    ]);
+
+    autoTable(doc, {
+      head: [["Máquina", "Estado", "Producto", "Cav.", "Prod/h", "Progreso"]],
+      body: tableData,
+      startY: 42,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246] },
+    });
+
+    if (currentComment && currentComment.comments) {
+      const finalY = (doc as any).lastAutoTable.finalY || 42;
+      doc.setFontSize(12);
+      doc.text("Comentarios para siguiente turno:", 14, finalY + 10);
+      doc.setFontSize(10);
+      const lines = doc.splitTextToSize(currentComment.comments, 180);
+      doc.text(lines, 14, finalY + 18);
+    }
+
+    doc.save(`mapa_planta_${format(new Date(), "dd-MM-yyyy_HH-mm")}.pdf`);
+    toast.success("PDF generado exitosamente");
+  };
+
   // Calculate statistics
   const stats = {
     total: machines?.length || 0,
@@ -178,9 +303,21 @@ export default function PlantMap() {
 
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Mapa de la Planta</h1>
-        <p className="text-muted-foreground">Vista en tiempo real del estado de todas las máquinas</p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Mapa de la Planta</h1>
+          <p className="text-muted-foreground">Vista en tiempo real del estado de todas las máquinas</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={exportMapToPDF} variant="outline">
+            <FileDown className="mr-2 h-4 w-4" />
+            Exportar PDF
+          </Button>
+          <Button onClick={() => setCommentsDialogOpen(true)} variant="outline">
+            <MessageSquare className="mr-2 h-4 w-4" />
+            Comentarios
+          </Button>
+        </div>
       </div>
 
       {/* Statistics Cards */}
@@ -356,6 +493,42 @@ export default function PlantMap() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Comments Dialog */}
+      <Dialog open={commentsDialogOpen} onOpenChange={setCommentsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Comentarios para el Siguiente Turno</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label>Turno</Label>
+              <Select value={selectedShift.toString()} onValueChange={(v) => setSelectedShift(parseInt(v))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">TURNO 1</SelectItem>
+                  <SelectItem value="2">TURNO 2</SelectItem>
+                  <SelectItem value="3">TURNO 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Comentarios</Label>
+              <Textarea
+                value={shiftComment}
+                onChange={(e) => setShiftComment(e.target.value)}
+                placeholder="Escribe los comentarios para el siguiente turno..."
+                className="min-h-[150px]"
+              />
+            </div>
+            <Button onClick={() => saveComment.mutate()} className="w-full" disabled={saveComment.isPending}>
+              {saveComment.isPending ? "Guardando..." : "Guardar Comentario"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
