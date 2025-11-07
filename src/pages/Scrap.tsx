@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Printer, Pencil, Trash2, Filter, ArrowUpDown } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import logo from "@/assets/logo.png";
 
 const MACHINES = [
   "ISBM 3", "ISBM 4", "ISBM 5", "ISBM 6", "ISBM 7", "ISBM 8",
@@ -228,6 +229,11 @@ const Scrap = () => {
 
   const exportScrapToPDF = () => {
     const doc = new jsPDF();
+    
+    const img = new Image();
+    img.src = logo;
+    doc.addImage(img, "PNG", 170, 10, 25, 10);
+    
     doc.setFontSize(18);
     doc.text("Reporte de Scrap", 14, 20);
     doc.setFontSize(11);
@@ -246,6 +252,9 @@ const Scrap = () => {
       startY: 40,
       head: [["Máquina", "Scrap", "Plasta", "Purga", "Preforma", "Total"]],
       body: summaryData,
+      theme: 'grid',
+      styles: { lineWidth: 0.1, lineColor: [200, 200, 200] },
+      headStyles: { fillColor: [0, 168, 89] },
     });
 
     doc.save(`scrap_${new Date().toISOString().split("T")[0]}.pdf`);
