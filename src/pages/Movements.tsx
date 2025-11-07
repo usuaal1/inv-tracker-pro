@@ -9,7 +9,6 @@ import { es } from "date-fns/locale";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
-import logo from "@/assets/logo.png";
 
 const Movements = () => {
   const { data: movements, isLoading } = useQuery({
@@ -38,10 +37,6 @@ const Movements = () => {
 
     const doc = new jsPDF();
     
-    const img = new Image();
-    img.src = logo;
-    doc.addImage(img, "PNG", 170, 10, 25, 10);
-    
     doc.setFontSize(18);
     doc.text("Historial de Movimientos", 14, 22);
     doc.setFontSize(11);
@@ -59,9 +54,8 @@ const Movements = () => {
       head: [["Fecha", "Producto", "Tipo", "Piezas", "Usuario"]],
       body: tableData,
       startY: 35,
-      theme: 'grid',
-      styles: { fontSize: 8, lineWidth: 0.1, lineColor: [200, 200, 200] },
-      headStyles: { fillColor: [0, 168, 89] },
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [59, 130, 246] },
     });
 
     doc.save(`movimientos_${format(new Date(), "dd-MM-yyyy")}.pdf`);

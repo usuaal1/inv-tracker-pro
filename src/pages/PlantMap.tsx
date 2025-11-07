@@ -281,8 +281,7 @@ export default function PlantMap() {
       head: [["Máquina", "Estado", "Producto", "Cav.", "Prod/h", "Progreso"]],
       body: tableData,
       startY: 42,
-      theme: 'grid',
-      styles: { fontSize: 9, lineWidth: 0.1, lineColor: [200, 200, 200] },
+      styles: { fontSize: 9 },
       headStyles: { fillColor: [0, 168, 89] },
     });
 

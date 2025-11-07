@@ -222,8 +222,7 @@ const ProductionReport = () => {
       head: [["Máquina", "Producto", "Ciclo", "Meta", "Producido", "%", "Notas"]],
       body: tableData,
       startY: 42,
-      theme: 'grid',
-      styles: { fontSize: 8, lineWidth: 0.1, lineColor: [200, 200, 200] },
+      styles: { fontSize: 8 },
       headStyles: { fillColor: [0, 168, 89] },
     });
 
@@ -296,9 +295,9 @@ const ProductionReport = () => {
                             <SelectValue placeholder="Selecciona máquina" />
                           </SelectTrigger>
                           <SelectContent>
-                            {machines?.filter(m => m.status === "producing").map((machine) => (
+                            {machines?.map((machine) => (
                               <SelectItem key={machine.id} value={machine.name}>
-                                {machine.name}
+                                {machine.name} {machine.status === "producing" && "✓"}
                               </SelectItem>
                             ))}
                           </SelectContent>
