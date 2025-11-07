@@ -9,6 +9,17 @@ import { es } from "date-fns/locale";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
+import logo from "@/assets/logo.png";
+
+// Helper function to get current shift based on time
+const getCurrentShift = (): number => {
+  const now = new Date();
+  const hour = now.getHours();
+  
+  if (hour >= 7 && hour < 15) return 1; // 7am - 3pm
+  if (hour >= 15 && hour < 23) return 2; // 3pm - 11pm
+  return 3; // 11pm - 6:59am
+};
 
 const History = () => {
   const { data: scrapRecords, isLoading } = useQuery({
@@ -36,10 +47,18 @@ const History = () => {
 
     const doc = new jsPDF();
     
+    // Add logo
+    const img = new Image();
+    img.src = logo;
+    doc.addImage(img, "PNG", 170, 10, 25, 10);
+    
+    const currentShift = getCurrentShift();
+    
     doc.setFontSize(18);
-    doc.text("Historial de Scrap", 14, 22);
+    doc.text("Historial de Scrap", 14, 20);
     doc.setFontSize(11);
-    doc.text(`Generado: ${format(new Date(), "PPp", { locale: es })}`, 14, 30);
+    doc.text(`Turno: ${currentShift}`, 14, 28);
+    doc.text(`Generado: ${format(new Date(), "PPp", { locale: es })}`, 14, 34);
 
     const tableData = scrapRecords.map((record: any) => [
       format(new Date(record.record_date), "dd/MM/yyyy", { locale: es }),
@@ -52,9 +71,14 @@ const History = () => {
     autoTable(doc, {
       head: [["Fecha", "Producto", "Máquina", "Tipo", "Cantidad"]],
       body: tableData,
-      startY: 35,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [239, 68, 68] },
+      startY: 40,
+      theme: 'grid',
+      styles: { 
+        fontSize: 8,
+        lineWidth: 0.1,
+        lineColor: [200, 200, 200]
+      },
+      headStyles: { fillColor: [0, 168, 89] },
     });
 
     doc.save(`scrap_${format(new Date(), "dd-MM-yyyy")}.pdf`);

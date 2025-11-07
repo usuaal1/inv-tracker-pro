@@ -17,6 +17,16 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import logo from "@/assets/logo.png";
 
+// Helper function to get current shift based on time
+const getCurrentShift = (): number => {
+  const now = new Date();
+  const hour = now.getHours();
+  
+  if (hour >= 7 && hour < 15) return 1; // 7am - 3pm
+  if (hour >= 15 && hour < 23) return 2; // 3pm - 11pm
+  return 3; // 11pm - 6:59am
+};
+
 type MachineStatus = "producing" | "mold_change" | "minor_stop" | "major_stop";
 
 interface Machine {
@@ -260,11 +270,14 @@ export default function PlantMap() {
     img.src = logo;
     doc.addImage(img, "PNG", 170, 10, 25, 10);
     
+    const currentShift = getCurrentShift();
+    
     doc.setFontSize(18);
     doc.text("MAPA DE PLANTA", 14, 20);
     doc.setFontSize(12);
-    doc.text(`Fecha: ${format(new Date(), "dd 'de' MMMM, yyyy", { locale: es })}`, 14, 28);
-    doc.text(`Hora: ${format(new Date(), "HH:mm")}`, 14, 35);
+    doc.text(`Turno: ${currentShift}`, 14, 28);
+    doc.text(`Fecha: ${format(new Date(), "dd 'de' MMMM, yyyy", { locale: es })}`, 14, 34);
+    doc.text(`Hora: ${format(new Date(), "HH:mm")}`, 14, 40);
 
     const tableData = machines.map((machine) => [
       machine.name,
@@ -280,13 +293,18 @@ export default function PlantMap() {
     autoTable(doc, {
       head: [["Máquina", "Estado", "Producto", "Cav.", "Prod/h", "Progreso"]],
       body: tableData,
-      startY: 42,
-      styles: { fontSize: 9 },
+      startY: 46,
+      theme: 'grid',
+      styles: { 
+        fontSize: 9,
+        lineWidth: 0.1,
+        lineColor: [200, 200, 200]
+      },
       headStyles: { fillColor: [0, 168, 89] },
     });
 
     if (currentComment && currentComment.comments) {
-      const finalY = (doc as any).lastAutoTable.finalY || 42;
+      const finalY = (doc as any).lastAutoTable.finalY || 46;
       doc.setFontSize(12);
       doc.text("Comentarios para siguiente turno:", 14, finalY + 10);
       doc.setFontSize(10);

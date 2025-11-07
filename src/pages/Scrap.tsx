@@ -13,6 +13,17 @@ import { Badge } from "@/components/ui/badge";
 import { Printer, Pencil, Trash2, Filter, ArrowUpDown } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import logo from "@/assets/logo.png";
+
+// Helper function to get current shift based on time
+const getCurrentShift = (): number => {
+  const now = new Date();
+  const hour = now.getHours();
+  
+  if (hour >= 7 && hour < 15) return 1; // 7am - 3pm
+  if (hour >= 15 && hour < 23) return 2; // 3pm - 11pm
+  return 3; // 11pm - 6:59am
+};
 
 const MACHINES = [
   "ISBM 3", "ISBM 4", "ISBM 5", "ISBM 6", "ISBM 7", "ISBM 8",
@@ -228,10 +239,19 @@ const Scrap = () => {
 
   const exportScrapToPDF = () => {
     const doc = new jsPDF();
+    
+    // Add logo
+    const img = new Image();
+    img.src = logo;
+    doc.addImage(img, "PNG", 170, 10, 25, 10);
+    
+    const currentShift = getCurrentShift();
+    
     doc.setFontSize(18);
     doc.text("Reporte de Scrap", 14, 20);
     doc.setFontSize(11);
     doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 30);
+    doc.text(`Turno: ${currentShift}`, 14, 36);
 
     const summaryData = scrapSummaryArray.map((item: any) => [
       item.machineName,
@@ -243,9 +263,16 @@ const Scrap = () => {
     ]);
 
     autoTable(doc, {
-      startY: 40,
+      startY: 42,
       head: [["Máquina", "Scrap", "Plasta", "Purga", "Preforma", "Total"]],
       body: summaryData,
+      theme: 'grid',
+      styles: { 
+        fontSize: 8,
+        lineWidth: 0.1,
+        lineColor: [200, 200, 200]
+      },
+      headStyles: { fillColor: [0, 168, 89] },
     });
 
     doc.save(`scrap_${new Date().toISOString().split("T")[0]}.pdf`);

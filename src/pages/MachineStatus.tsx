@@ -345,7 +345,8 @@ export default function MachineStatus() {
                   if (selectedMachine) {
                     setSelectedMachine({
                       ...selectedMachine,
-                      current_product_id: value === "none" ? null : value
+                      current_product_id: value === "none" ? null : value,
+                      quantity_ordered: value === "none" ? 0 : selectedMachine.quantity_ordered
                     });
                   }
                 }}
@@ -354,7 +355,7 @@ export default function MachineStatus() {
                   <SelectValue placeholder="Seleccionar producto" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Sin producto</SelectItem>
+                  <SelectItem value="none">Quitar producto</SelectItem>
                   {products?.map((product) => (
                     <SelectItem key={product.id} value={product.id}>
                       {product.name}

@@ -15,6 +15,16 @@ import { es } from "date-fns/locale";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import logo from "@/assets/logo.png";
 
+// Helper function to get current shift based on time
+const getCurrentShift = (): number => {
+  const now = new Date();
+  const hour = now.getHours();
+  
+  if (hour >= 7 && hour < 15) return 1; // 7am - 3pm
+  if (hour >= 15 && hour < 23) return 2; // 3pm - 11pm
+  return 3; // 11pm - 6:59am
+};
+
 interface ProductionReport {
   id: string;
   shift_number: number;
@@ -202,11 +212,14 @@ const ProductionReport = () => {
     img.src = logo;
     doc.addImage(img, "PNG", 170, 10, 25, 10);
     
+    const currentShift = getCurrentShift();
+    
     doc.setFontSize(18);
     doc.text("REPORTE DE PRODUCCIÓN", 14, 20);
     doc.setFontSize(12);
     doc.text(`TURNO ${selectedShift}`, 14, 28);
-    doc.text(`Fecha: ${format(new Date(selectedDate), "dd 'de' MMMM, yyyy", { locale: es })}`, 14, 35);
+    doc.text(`Turno Actual: ${currentShift}`, 14, 34);
+    doc.text(`Fecha: ${format(new Date(selectedDate), "dd 'de' MMMM, yyyy", { locale: es })}`, 14, 40);
 
     const tableData = reports.map((report) => [
       report.machine_name,
@@ -221,8 +234,13 @@ const ProductionReport = () => {
     autoTable(doc, {
       head: [["Máquina", "Producto", "Ciclo", "Meta", "Producido", "%", "Notas"]],
       body: tableData,
-      startY: 42,
-      styles: { fontSize: 8 },
+      startY: 46,
+      theme: 'grid',
+      styles: { 
+        fontSize: 8,
+        lineWidth: 0.1,
+        lineColor: [200, 200, 200]
+      },
       headStyles: { fillColor: [0, 168, 89] },
     });
 
