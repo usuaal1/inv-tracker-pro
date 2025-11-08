@@ -225,14 +225,14 @@ const ProductionReport = () => {
       report.machine_name,
       report.product_name || "-",
       report.cycle_time || "-",
-      report.production_goal.toLocaleString(),
       report.production_achieved.toLocaleString(),
+      report.production_goal.toLocaleString(),
       `${report.production_goal > 0 ? ((report.production_achieved / report.production_goal) * 100).toFixed(1) : 0}%`,
       report.notes || "-",
     ]);
 
     autoTable(doc, {
-      head: [["Máquina", "Producto", "Ciclo", "Meta", "Producido", "%", "Notas"]],
+      head: [["Máquina", "Producto", "Ciclo", "Producción", "Meta", "Acumulado", "Notas"]],
       body: tableData,
       startY: 46,
       theme: 'grid',
